@@ -101,8 +101,8 @@ environment to manage dependencies.
 
 For example, if you are using `pyenv`, you can create a new virtual environment with:
 ```shell
-pyenv install 3.11
-pyenv virtualenv 3.11 opengpts
+pyenv install 3.11.9
+pyenv virtualenv 3.11.9 opengpts
 pyenv activate opengpts
 ```
 
@@ -111,8 +111,8 @@ Once your Python environment is set up, you can install the project dependencies
 The backend service uses [poetry](https://python-poetry.org/docs/#installation) to manage dependencies.
 
 ```shell 
-pip install poetry
-pip install langchain-community
+python -m pip install poetry
+python -m pip install gigachain-community
 ```
 
 **Install Postgres and the Postgres Vector Extension**
@@ -120,6 +120,8 @@ pip install langchain-community
 brew install postgresql pgvector
 brew services start postgresql
 ```
+OR
+TODO: run pgvector docker pgvector/pgvector:pg16
 
 **Configure persistence layer**
 
@@ -128,15 +130,19 @@ In order to use this, you need to set the following environment variables:
 
 ```shell
 export POSTGRES_HOST=localhost
-export POSTGRES_PORT=5432
+export POSTGRES_PORT=5433
 export POSTGRES_DB=opengpts
 export POSTGRES_USER=postgres
-export POSTGRES_PASSWORD=...
+export POSTGRES_PASSWORD=1q2w3e4r
 ```
 
 **Create the database**
 ```shell
-createdb opengpts
+#createdb opengpts
+docker exec -it pgvector-container psql -U postgres
+postgres=#CREATE DATABASE opengpts;
+postgres=#\c opengpts;
+postgres=#CREATE EXTENSION vector;
 ```
 
 **Connect to the database and create the `postgres` role**
@@ -157,6 +163,7 @@ can be found [here](https://github.com/golang-migrate/migrate/blob/master/cmd/mi
 
 Once `golang-migrate` is installed, you can run all the migrations with:
 ```shell
+cd backend
 make migrate
 ```
 
@@ -170,18 +177,13 @@ poetry install
 ```
 
 
-**Alternate vector databases**
-
-The instructions above use Postgres as a vector database,
-although you can easily switch this out to use any of the 50+ vector databases in LangChain.
-
 **Set up language models**
 
 By default, this uses OpenAI, but there are also options for Azure OpenAI and Anthropic.
 If you are using those, you may need to set different environment variables.
 
 ```shell
-export OPENAI_API_KEY="sk-..."
+export GIGACHAT_API_KEY="..."
 ```
 
 Other language models can be used, and in order to use them you will need to set more environment variables.
@@ -195,6 +197,11 @@ You do not need to use any of these tools, and the environment variables are not
 (they are only required if that tool is called).
 
 For a full list of environment variables to enable, see the `Tools` section below.
+
+**Установка корневого сертификата НУЦ Минцифры**
+```shell
+curl -k "https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer" -w "\n" >> $(python -m certifi)
+```
 
 **Set up monitoring**
 
@@ -210,6 +217,7 @@ export LANGCHAIN_API_KEY=...
 Start the backend server
 
 ```shell
+export $(grep -v '^#' ../.env | xargs)
 make start
 ```
 

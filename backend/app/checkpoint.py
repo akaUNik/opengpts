@@ -7,10 +7,19 @@ from langchain_core.runnables import ConfigurableFieldSpec, RunnableConfig
 from langgraph.checkpoint.base import BaseCheckpointSaver
 from langgraph.checkpoint.base import (
     Checkpoint,
-    CheckpointAt,
-    CheckpointThreadTs,
+    # CheckpointAt,
+    # CheckpointThreadTs,
     CheckpointTuple,
     SerializerProtocol,
+)
+
+CheckpointThreadTs = ConfigurableFieldSpec(
+    id="thread_ts",
+    annotation=Optional[str],
+    name="Thread Timestamp",
+    description="Pass to fetch a past checkpoint. If None, fetches the latest checkpoint.",
+    default=None,
+    is_shared=True,
 )
 
 from app.lifespan import get_pg_pool
@@ -29,9 +38,8 @@ class PostgresCheckpoint(BaseCheckpointSaver):
         self,
         *,
         serde: Optional[SerializerProtocol] = None,
-        at: Optional[CheckpointAt] = None,
     ) -> None:
-        super().__init__(serde=serde, at=at)
+        super().__init__(serde=serde)
 
     @property
     def config_specs(self) -> list[ConfigurableFieldSpec]:
@@ -124,6 +132,9 @@ class PostgresCheckpoint(BaseCheckpointSaver):
                     )
 
     async def aput(self, config: RunnableConfig, checkpoint: Checkpoint) -> None:
+        print(f'config: {config}')
+        print(f'checkpoint: {checkpoint}')
+
         thread_id = config["configurable"]["thread_id"]
         async with get_pg_pool().acquire() as conn:
             await conn.execute(

@@ -22,7 +22,7 @@ from langchain_community.utilities.arxiv import ArxivAPIWrapper
 from langchain_community.utilities.dalle_image_generator import DallEAPIWrapper
 from langchain_community.utilities.tavily_search import TavilySearchAPIWrapper
 from langchain_core.tools import Tool
-from langchain_robocorp import ActionServerToolkit
+# from langchain_robocorp import ActionServerToolkit
 from typing_extensions import TypedDict
 
 from app.upload import vstore
@@ -286,14 +286,14 @@ def _get_tavily_answer():
     return _TavilyAnswer(api_wrapper=tavily_search, name="search_tavily_answer")
 
 
-def _get_action_server(**kwargs: ActionServerConfig):
-    toolkit = ActionServerToolkit(
-        url=kwargs["url"],
-        api_key=kwargs["api_key"],
-        additional_headers=kwargs.get("additional_headers", {}),
-    )
-    tools = toolkit.get_tools()
-    return tools
+# def _get_action_server(**kwargs: ActionServerConfig):
+#     toolkit = ActionServerToolkit(
+#         url=kwargs["url"],
+#         api_key=kwargs["api_key"],
+#         additional_headers=kwargs.get("additional_headers", {}),
+#     )
+#     tools = toolkit.get_tools()
+#     return tools
 
 
 @lru_cache(maxsize=1)
@@ -314,7 +314,7 @@ def _get_dalle_tools():
 
 
 TOOLS = {
-    AvailableTools.ACTION_SERVER: _get_action_server,
+    # AvailableTools.ACTION_SERVER: _get_action_server,
     AvailableTools.CONNERY: _get_connery_actions,
     AvailableTools.DDG_SEARCH: _get_duck_duck_go,
     AvailableTools.ARXIV: _get_arxiv,

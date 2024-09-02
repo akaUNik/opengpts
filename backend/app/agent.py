@@ -7,7 +7,7 @@ from langchain_core.runnables import (
     ConfigurableField,
     RunnableBinding,
 )
-from langgraph.checkpoint import CheckpointAt
+# from langgraph.checkpoint import CheckpointAt
 from langgraph.graph.message import Messages
 from langgraph.pregel import Pregel
 
@@ -16,11 +16,7 @@ from app.agent_types.xml_agent import get_xml_agent_executor
 from app.chatbot import get_chatbot_executor
 from app.checkpoint import PostgresCheckpoint
 from app.llms import (
-    get_anthropic_llm,
-    get_google_llm,
-    get_mixtral_fireworks,
-    get_ollama_llm,
-    get_openai_llm,
+    get_gigachat_llm,
 )
 from app.retrieval import get_retrieval_executor
 from app.tools import (
@@ -62,19 +58,12 @@ Tool = Union[
 
 
 class AgentType(str, Enum):
-    GPT_35_TURBO = "GPT 3.5 Turbo"
-    GPT_4 = "GPT 4 Turbo"
-    GPT_4O = "GPT 4o"
-    AZURE_OPENAI = "GPT 4 (Azure OpenAI)"
-    CLAUDE2 = "Claude 2"
-    BEDROCK_CLAUDE2 = "Claude 2 (Amazon Bedrock)"
-    GEMINI = "GEMINI"
-    OLLAMA = "Ollama"
+    GIGACHAT = "GigaChat"
 
 
 DEFAULT_SYSTEM_MESSAGE = "You are a helpful assistant."
 
-CHECKPOINTER = PostgresCheckpoint(serde=pickle, at=CheckpointAt.END_OF_STEP)
+CHECKPOINTER = PostgresCheckpoint(serde=pickle)
 
 
 def get_agent_executor(
@@ -83,47 +72,11 @@ def get_agent_executor(
     system_message: str,
     interrupt_before_action: bool,
 ):
-    if agent == AgentType.GPT_35_TURBO:
-        llm = get_openai_llm()
+    if agent == AgentType.GIGACHAT:
+        llm = get_gigachat_llm()
         return get_tools_agent_executor(
             tools, llm, system_message, interrupt_before_action, CHECKPOINTER
         )
-    elif agent == AgentType.GPT_4:
-        llm = get_openai_llm(model="gpt-4-turbo")
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.GPT_4O:
-        llm = get_openai_llm(model="gpt-4o")
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.AZURE_OPENAI:
-        llm = get_openai_llm(azure=True)
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.CLAUDE2:
-        llm = get_anthropic_llm()
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.BEDROCK_CLAUDE2:
-        llm = get_anthropic_llm(bedrock=True)
-        return get_xml_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.GEMINI:
-        llm = get_google_llm()
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-    elif agent == AgentType.OLLAMA:
-        llm = get_ollama_llm()
-        return get_tools_agent_executor(
-            tools, llm, system_message, interrupt_before_action, CHECKPOINTER
-        )
-
     else:
         raise ValueError("Unexpected agent type")
 
@@ -142,7 +95,7 @@ class ConfigurableAgent(RunnableBinding):
         self,
         *,
         tools: Sequence[Tool],
-        agent: AgentType = AgentType.GPT_35_TURBO,
+        agent: AgentType = AgentType.GIGACHAT,
         system_message: str = DEFAULT_SYSTEM_MESSAGE,
         assistant_id: Optional[str] = None,
         thread_id: Optional[str] = None,
@@ -186,37 +139,14 @@ class ConfigurableAgent(RunnableBinding):
 
 
 class LLMType(str, Enum):
-    GPT_35_TURBO = "GPT 3.5 Turbo"
-    GPT_4 = "GPT 4 Turbo"
-    GPT_4O = "GPT 4o"
-    AZURE_OPENAI = "GPT 4 (Azure OpenAI)"
-    CLAUDE2 = "Claude 2"
-    BEDROCK_CLAUDE2 = "Claude 2 (Amazon Bedrock)"
-    GEMINI = "GEMINI"
-    MIXTRAL = "Mixtral"
-    OLLAMA = "Ollama"
-
+    GIGACHAT = "GigaChat"
 
 def get_chatbot(
     llm_type: LLMType,
     system_message: str,
 ):
-    if llm_type == LLMType.GPT_35_TURBO:
-        llm = get_openai_llm()
-    elif llm_type == LLMType.GPT_4:
-        llm = get_openai_llm(gpt_4=True)
-    elif llm_type == LLMType.AZURE_OPENAI:
-        llm = get_openai_llm(azure=True)
-    elif llm_type == LLMType.CLAUDE2:
-        llm = get_anthropic_llm()
-    elif llm_type == LLMType.BEDROCK_CLAUDE2:
-        llm = get_anthropic_llm(bedrock=True)
-    elif llm_type == LLMType.GEMINI:
-        llm = get_google_llm()
-    elif llm_type == LLMType.MIXTRAL:
-        llm = get_mixtral_fireworks()
-    elif llm_type == LLMType.OLLAMA:
-        llm = get_ollama_llm()
+    if llm_type == LLMType.GIGACHAT:
+        llm = get_gigachat_llm()
     else:
         raise ValueError("Unexpected llm type")
     return get_chatbot_executor(llm, system_message, CHECKPOINTER)
@@ -230,7 +160,7 @@ class ConfigurableChatBot(RunnableBinding):
     def __init__(
         self,
         *,
-        llm: LLMType = LLMType.GPT_35_TURBO,
+        llm: LLMType = LLMType.GIGACHAT,
         system_message: str = DEFAULT_SYSTEM_MESSAGE,
         kwargs: Optional[Mapping[str, Any]] = None,
         config: Optional[Mapping[str, Any]] = None,
@@ -249,7 +179,7 @@ class ConfigurableChatBot(RunnableBinding):
 
 
 chatbot = (
-    ConfigurableChatBot(llm=LLMType.GPT_35_TURBO, checkpoint=CHECKPOINTER)
+    ConfigurableChatBot(llm=LLMType.GIGACHAT, checkpoint=CHECKPOINTER)
     .configurable_fields(
         llm=ConfigurableField(id="llm_type", name="LLM Type"),
         system_message=ConfigurableField(id="system_message", name="Instructions"),
@@ -271,7 +201,7 @@ class ConfigurableRetrieval(RunnableBinding):
     def __init__(
         self,
         *,
-        llm_type: LLMType = LLMType.GPT_35_TURBO,
+        llm_type: LLMType = LLMType.GIGACHAT,
         system_message: str = DEFAULT_SYSTEM_MESSAGE,
         assistant_id: Optional[str] = None,
         thread_id: Optional[str] = None,
@@ -281,24 +211,8 @@ class ConfigurableRetrieval(RunnableBinding):
     ) -> None:
         others.pop("bound", None)
         retriever = get_retriever(assistant_id, thread_id)
-        if llm_type == LLMType.GPT_35_TURBO:
-            llm = get_openai_llm()
-        elif llm_type == LLMType.GPT_4:
-            llm = get_openai_llm(model="gpt-4-turbo")
-        elif llm_type == LLMType.GPT_4O:
-            llm = get_openai_llm(model="gpt-4o")
-        elif llm_type == LLMType.AZURE_OPENAI:
-            llm = get_openai_llm(azure=True)
-        elif llm_type == LLMType.CLAUDE2:
-            llm = get_anthropic_llm()
-        elif llm_type == LLMType.BEDROCK_CLAUDE2:
-            llm = get_anthropic_llm(bedrock=True)
-        elif llm_type == LLMType.GEMINI:
-            llm = get_google_llm()
-        elif llm_type == LLMType.MIXTRAL:
-            llm = get_mixtral_fireworks()
-        elif llm_type == LLMType.OLLAMA:
-            llm = get_ollama_llm()
+        if llm_type == LLMType.GIGACHAT:
+            llm = get_gigachat_llm()
         else:
             raise ValueError("Unexpected llm type")
         chatbot = get_retrieval_executor(llm, retriever, system_message, CHECKPOINTER)
@@ -312,7 +226,7 @@ class ConfigurableRetrieval(RunnableBinding):
 
 
 chat_retrieval = (
-    ConfigurableRetrieval(llm_type=LLMType.GPT_35_TURBO, checkpoint=CHECKPOINTER)
+    ConfigurableRetrieval(llm_type=LLMType.GIGACHAT, checkpoint=CHECKPOINTER)
     .configurable_fields(
         llm_type=ConfigurableField(id="llm_type", name="LLM Type"),
         system_message=ConfigurableField(id="system_message", name="Instructions"),
@@ -330,7 +244,7 @@ chat_retrieval = (
 
 agent: Pregel = (
     ConfigurableAgent(
-        agent=AgentType.GPT_35_TURBO,
+        agent=AgentType.GIGACHAT,
         tools=[],
         system_message=DEFAULT_SYSTEM_MESSAGE,
         retrieval_description=RETRIEVAL_DESCRIPTION,

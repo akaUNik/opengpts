@@ -22,7 +22,7 @@ from langchain_core.runnables import (
     RunnableSerializable,
 )
 from langchain_core.vectorstores import VectorStore
-from langchain_openai import AzureOpenAIEmbeddings, OpenAIEmbeddings
+from langchain_community.embeddings.gigachat import GigaChatEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter, TextSplitter
 
 from app.ingest import ingest_blob
@@ -83,26 +83,24 @@ def convert_ingestion_input_to_blob(file: UploadFile) -> Blob:
 
 
 def _determine_azure_or_openai_embeddings() -> PGVector:
-    if os.environ.get("OPENAI_API_KEY"):
-        return PGVector(
-            connection_string=PG_CONNECTION_STRING,
-            embedding_function=OpenAIEmbeddings(),
-            use_jsonb=True,
+    if os.environ.get("GIGACHAT_API_KEY"):
+        authorization = os.environ.get("GIGACHAT_API_KEY")
+        auth_url = os.environ.get("GIGACHAT_AUTH_URL")
+        scope = os.environ.get("GIGACHAT_SCOPE")
+
+        embeddings = GigaChatEmbeddings(
+            credentials=authorization,
+            auth_url=auth_url,
+            scope=scope,
         )
-    if os.environ.get("AZURE_OPENAI_API_KEY"):
+
         return PGVector(
             connection_string=PG_CONNECTION_STRING,
-            embedding_function=AzureOpenAIEmbeddings(
-                azure_endpoint=os.environ.get("AZURE_OPENAI_API_BASE"),
-                azure_deployment=os.environ.get(
-                    "AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME"
-                ),
-                openai_api_version=os.environ.get("AZURE_OPENAI_API_VERSION"),
-            ),
+            embedding_function=embeddings,
             use_jsonb=True,
         )
     raise ValueError(
-        "Either OPENAI_API_KEY or AZURE_OPENAI_API_KEY needs to be set for embeddings to work."
+        "GIGACHAT_API_KEY needs to be set for embeddings to work."
     )
 
 

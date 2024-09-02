@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any, List, Optional, Sequence, Union
 
-from langchain_core.messages import AnyMessage
+from langchain_core.messages.utils import AnyMessage
 from langchain_core.runnables import RunnableConfig
 
 from app.agent import agent
